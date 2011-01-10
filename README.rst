@@ -11,8 +11,8 @@ attachments) from erlang systems.
 New Features
 ============
 
-add XOAuth authentication gmail.
-add mail headers "Subject" and "To".
+ - add XOAuth authentication gmail.
+ - add mail headers "Subject" and "To".
 
 TODO
 ====
