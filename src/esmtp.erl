@@ -42,10 +42,17 @@ send(From, To, Message) ->
              false -> {Host, Port, gen_tcp, no_login}
          end,
     Ehlo = esmtp_app:config(default_ehlo),
-    send(MX, Ehlo, From, To, Message).
+    send0(MX, Ehlo, From, To, Message).
 
-send(MX, Ehlo, From, To, Msg) ->
-    esmtp_client:send(MX, Ehlo, From, To, Msg).
+% @spec send(SmtpServ, From::string(), To::string(), Message::string(), Authentication)
+send({Host, Port}, Authentication, From, To, Message) ->
+    MX = case esmtp_app:need_ssl(Port) of
+             true -> {Host, Port, ssl, Authentication};
+             false -> {Host, Port, gen_tcp, no_login}
+         end,
+    Ehlo = esmtp_app:config(default_ehlo),
+    send0(MX, Ehlo, From, To, Message)
+.
 
 mailq() ->
     supervisor:which_children(esmtp_sup).
@@ -53,4 +60,7 @@ mailq() ->
 %%====================================================================
 %% Internal functions
 %%====================================================================
+
+send0(MX, Ehlo, From, To, Msg) ->
+    esmtp_client:send(MX, Ehlo, From, To, Msg).
 

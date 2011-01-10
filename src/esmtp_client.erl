@@ -39,9 +39,12 @@ sendemail({Host,Port,SSL,Login},Ehlo,From,To,Msg) ->
     {ok, S1, {220, _, _Banner}} = esmtp_sock:read_response_all(S0),
     {ok, S2, {250, _, _Msg}} = esmtp_sock:command(S1, {ehlo, Ehlo}),
     AuthS = case Login of
+                {xoauth, XOAuthToken} ->
+                    {ok, S3, {235, _, _}} = esmtp_sock:command(S2, {auth_xoauth, XOAuthToken}),
+                    S3;
                 {User,Pass} ->
-                    {ok, S3, {334,_, _}} = esmtp_sock:command(S2, {auth, "PLAIN"}),
-                    {ok, S4, {235,_, _}} = esmtp_sock:command(S3, {auth_plain, User, Pass}),
+                    {ok, S3, {334, _, _}} = esmtp_sock:command(S2, {auth, "PLAIN"}),
+                    {ok, S4, {235, _, _}} = esmtp_sock:command(S3, {auth_plain, User, Pass}),
                     S4;
                 no_login ->
                     S2

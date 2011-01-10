@@ -85,6 +85,8 @@ encode({Code, last, Message}) when is_integer(Code) ->
     [integer_to_list(Code), $\s, Message];
 encode({auth_plain, Username, Password}) ->
     [encode_auth(Username, Password)];
+encode({auth_xoauth, XOAuthToken}) ->
+    [<<"AUTH XOAUTH ">>, XOAuthToken];
 encode({raw, <<$., Line/binary>>}) ->
     ["..", Line];
 encode({raw, Line}) ->

@@ -28,8 +28,7 @@
 %%====================================================================
 
 connect(Host, Port, Type) ->
-    case Type:connect(Host, Port,
-                      ?TCP_OPTS) of
+    case Type:connect(Host, Port, ?TCP_OPTS) of
         {ok, Sock} ->
             {ok, #esmtp_sock{sock=Sock,
                              type=Type}};
@@ -54,13 +53,10 @@ read_response_all(S) ->
         {error, _} = E -> E
     end.
 
-
-command(S = #esmtp_sock{},
-        Command) when is_tuple(Command) ->
+command(S = #esmtp_sock{}, Command) when is_tuple(Command); is_atom(Command) ->
     {ok, S1} = send(S, [esmtp_codec:encode(Command), $\r, $\n]),
     read_response_all(S1);
-command(S = #esmtp_sock{},
-        Command) when is_atom(Command) ->
+command(S = #esmtp_sock{}, Command) when is_atom(Command) ->
     {ok, S1} = send(S, [esmtp_codec:encode(Command), $\r, $\n]),
     read_response_all(S1);
 command(S = #esmtp_sock{},

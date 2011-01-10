@@ -1,3 +1,17 @@
+This fork of esmtp will not try to maintain the same API as the original project.
+
+New Features
+============
+
+add XOAuth authentication gmail.
+
+TODO
+====
+
+add headers for 'TO' and 'CC'
+
+support for utf-8
+
 =======================================
 esmtp - A simple SMTP client for Erlang
 =======================================
