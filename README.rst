@@ -12,6 +12,7 @@ New Features
 ============
 
 add XOAuth authentication gmail.
+add mail headers "Subject" and "To".
 
 TODO
 ====
@@ -50,5 +51,4 @@ gmail.config::
   [{esmtp, [{smarthost, {"smtp.gmail.com", 465}}
            ,{login, {"youraddress@gmail.com","yourpassword"}}
            ,{default_from, "Erlang pretending to be <youraddress@gmail.com>"}]}].
-
 

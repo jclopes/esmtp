@@ -14,7 +14,7 @@
          ,send/1
          ,send/2
          ,send/3
-         ,send/5
+         ,send/6
          ,mailq/0]).
 
 start() ->
@@ -44,8 +44,9 @@ send(From, To, Message) ->
     Ehlo = esmtp_app:config(default_ehlo),
     send0(MX, Ehlo, From, To, Message).
 
-% @spec send(SmtpServ, From::string(), To::string(), Message::string(), Authentication)
-send({Host, Port}, Authentication, From, To, Message) ->
+% @spec send(SmtpServ, Authentication, From::string(), To::string(), Subject::string(), Body::string())
+send({Host, Port}, Authentication, From, To, Subject, Body) ->
+    Message = assembly_msg(To, Subject, Body),
     MX = case esmtp_app:need_ssl(Port) of
              true -> {Host, Port, ssl, Authentication};
              false -> {Host, Port, gen_tcp, no_login}
@@ -62,5 +63,13 @@ mailq() ->
 %%====================================================================
 
 send0(MX, Ehlo, From, To, Msg) ->
-    esmtp_client:send(MX, Ehlo, From, To, Msg).
+    esmtp_client:send(MX, Ehlo, From, To, Msg)
+.
+
+assembly_msg(To, Subject, Body) ->
+    "To: "++To++"\r\n" ++
+    "Subject: "++Subject++"\r\n" ++
+    "\r\n" ++
+    Body
+.
 
