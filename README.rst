@@ -1,4 +1,12 @@
+=======================================
+esmtp - A simple SMTP client for Erlang
+=======================================
+
 This fork of esmtp will not try to maintain the same API as the original project.
+
+esmtp is a simple OTP application providing a way to send emails (and
+attachments) from erlang systems.
+
 
 New Features
 ============
@@ -8,16 +16,9 @@ add XOAuth authentication gmail.
 TODO
 ====
 
-add headers for 'TO' and 'CC'
+add headers for 'TO' and 'CC'.
 
-support for utf-8
-
-=======================================
-esmtp - A simple SMTP client for Erlang
-=======================================
-
-esmtp is a simple OTP application providing a way to send emails (and
-attachments) from erlang systems.
+support for utf-8.
 
 Configuration
 =============
