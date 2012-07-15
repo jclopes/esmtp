@@ -8,52 +8,44 @@
 -module(esmtp_client).
 
 %% API
--export([send/5
-         ,start_link/5
-         ,init/5
-         ,sendemail/5]).
+-export([send/4]).
 
 %%====================================================================
 %% API
 %%====================================================================
 
-send(MX, Ehlo, From, To, Msg) when is_list(From), is_list(To) ->
-    is_mx(MX),
-    supervisor:start_child(esmtp_sup, [MX, Ehlo, From, To, Msg]).
-
-start_link(MX, Ehlo, From, To, Msg) ->
-    proc_lib:start_link(?MODULE, init, [MX, Ehlo, From, To, Msg]).
+% TODO: this is over simplifyed
+% need to return some error messages
+%  - fail to authenticate
+%  - bad server address
+send({Host, Port, SocketType, Ehlo, Authentication}, From, ToList, Msg) ->
+    {ok, S0} = esmtp_sock:connect(Host, Port, SocketType),
+    {ok, S1, {220, _, _Banner}} = esmtp_sock:read_response_all(S0),
+    {ok, S2, {250, _, _Msg}} = esmtp_sock:command(S1, {ehlo, Ehlo}),
+    AuthS = case Authentication of
+        {xoauth, XOAuthToken} ->
+            {ok, S3, {235, _, _}} = esmtp_sock:command(S2, {auth_xoauth, XOAuthToken}),
+            S3;
+        {User,Pass} ->
+            {ok, S3, {334, _, _}} = esmtp_sock:command(S2, {auth, "PLAIN"}),
+            {ok, S4, {235, _, _}} = esmtp_sock:command(S3, {auth_plain, User, Pass}),
+            S4;
+        no_login ->
+            S2
+    end,
+    {ok, S10, {250, _, _}} = esmtp_sock:command(AuthS, {mail_from, From}),
+    S11 = lists:foldl(
+        fun(To, Acc) ->
+            {ok, NewAcc, {250, _, _}} = esmtp_sock:command(Acc, {rcpt_to, To}),
+            NewAcc
+        end,
+        S10,
+        ToList
+    ),
+    {ok, S12, {250, _, _}} = esmtp_sock:send_data(S11, Msg),
+    esmtp_sock:close(S12)
+.
 
 %%====================================================================
 %% Internal functions
 %%====================================================================
-
-init({Host,Port},Ehlo,From,To,Msg) ->
-    init({Host,Port,tcp,no_login},Ehlo,From,To,Msg);
-init(MX,Ehlo,From,To,Msg) ->
-    proc_lib:init_ack({ok, self()}),
-    sendemail(MX,Ehlo,From,To,Msg).
-
-sendemail({Host,Port,SSL,Login},Ehlo,From,To,Msg) ->
-    {ok, S0} = esmtp_sock:connect(Host, Port, SSL),
-    {ok, S1, {220, _, _Banner}} = esmtp_sock:read_response_all(S0),
-    {ok, S2, {250, _, _Msg}} = esmtp_sock:command(S1, {ehlo, Ehlo}),
-    AuthS = case Login of
-                {xoauth, XOAuthToken} ->
-                    {ok, S3, {235, _, _}} = esmtp_sock:command(S2, {auth_xoauth, XOAuthToken}),
-                    S3;
-                {User,Pass} ->
-                    {ok, S3, {334, _, _}} = esmtp_sock:command(S2, {auth, "PLAIN"}),
-                    {ok, S4, {235, _, _}} = esmtp_sock:command(S3, {auth_plain, User, Pass}),
-                    S4;
-                no_login ->
-                    S2
-            end,
-    {ok, S10, {250, _, _}} = esmtp_sock:command(AuthS, {mail_from, From}),
-    {ok, S11, {250, _, _}} = esmtp_sock:command(S10, {rcpt_to, To}),
-    {ok, S12, {250, _, _}} = esmtp_sock:send_data(S11, Msg),
-    esmtp_sock:close(S12).
-
-is_mx({_Host,Port}) when is_integer(Port) -> true;
-is_mx({_Host,Port,ssl,_Login}) when is_integer(Port) -> true;
-is_mx({_Host,Port,gen_tcp,no_login}) when is_integer(Port) -> true.
