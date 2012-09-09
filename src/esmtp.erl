@@ -12,7 +12,7 @@
 
 %% API
 -export([
-    conn/2,
+    conn/3,
     send/2,
     send/5
 ]).
@@ -26,9 +26,13 @@
 
 % @doc Setup a SMTP connection object.
 % This object is passed to the send command.
-% @spec conn({string(), integer()}, term()) -> SmtpConn::term()
-conn({Host, Port}, Authentication) ->
-    Ehlo = "", % TODO: this should be a FQDN of the client. RFC 2821.
+% Arguments:
+%  ClientFQDN: this should be a FQDN of the client. RFC 2821.
+%  {Host, Port}: SMTP server Hostname and SMTP server port
+%  Authentication: this will be {user, pass} or XOAUTH token
+% @spec conn(string(), {string(), integer()}, term()) -> SmtpConn::term()
+conn(ClientFQDN, {Host, Port}, Authentication) when is_integer(Port) ->
+    Ehlo = ClientFQDN,
     case need_ssl(Port) of
         true -> {Host, Port, ssl, Ehlo, Authentication};
         false -> {Host, Port, gen_tcp, Ehlo, Authentication}
