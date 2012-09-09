@@ -15,13 +15,15 @@
     encode_no_bcc/1,
     send/5,
     msg/0, msg/3, msg/4,
+    date/2,
     from/1, from/2,
     to/1, to/2,
     cc/1, cc/2,
     bcc/1, bcc/2,
     subject/1, subject/2,
     add_text_part/2,
-    add_attachment_part/3
+    add_attachment_part/3,
+    del_attachment_part/2
 ]).
 
 -export([
@@ -133,6 +135,20 @@ add_attachment_part(#mime_msg{parts=Parts}=Msg, Filename, FileData) when
     },
     Msg#mime_msg{parts=Parts ++ [MimePart]}
 .
+
+del_attachment_part(#mime_msg{parts=Parts}=Msg, DelFilename) ->
+    F = fun(#mime_part{name=Name}) ->
+        case Name of
+            DelFilename ->
+                false
+            ;
+            _ -> true
+        end
+    end,
+    NParts = lists:filter(F, Parts),
+    Msg#mime_msg{parts=NParts}
+.
+
 
 %%====================================================================
 %% Internal functions
