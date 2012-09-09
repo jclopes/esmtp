@@ -79,7 +79,11 @@ to(Msg, To) ->
 .
 
 to(#mime_msg{headers=H}) ->
-    proplists:get_value("To", H, [])
+    [
+        encode_address(NameAddress)
+        ||
+        NameAddress <- proplists:get_value("To", H, [])
+    ]
 .
 
 cc(Msg, Cc) ->
@@ -87,11 +91,19 @@ cc(Msg, Cc) ->
 .
 
 cc(#mime_msg{headers=H}) ->
-    proplists:get_value("Cc", H, [])
+    [
+        encode_address(NameAddress)
+        ||
+        NameAddress <- proplists:get_value("Cc", H, [])
+    ]
 .
 
 bcc(Msg, Bcc) ->
-    replace_header(Msg, "Bcc", Bcc)
+    [
+        encode_address(NameAddress)
+        ||
+        NameAddress <- replace_header(Msg, "Bcc", Bcc)
+    ]
 .
 
 bcc(#mime_msg{headers=H}) ->
@@ -103,7 +115,7 @@ from(Msg, From) ->
 .
 
 from(#mime_msg{headers=H}) ->
-    proplists:get_value("From", H, undefined)
+    encode_address(proplists:get_value("From", H, undefined))
 .
 
 subject(Msg, Subject) ->
@@ -207,7 +219,10 @@ send_test(Ip, Host, From, To) ->
     send(Ip, Host, From, To, test_msg()).
 
 encode_address({Name, Address}) ->
-    "=?UTF-8?B?"++base64:encode_to_string(Name)++"?= "++Address
+    "=?UTF-8?B?"++base64:encode_to_string(Name)++"?= <"++Address++">"
+;
+encode_address(Address) when is_list(Address) ->
+    Address
 .
 
 encode_subject(Subject) ->

@@ -41,17 +41,26 @@ conn(ClientFQDN, {Host, Port}, Authentication) when is_integer(Port) ->
 
 % @TODO: send a sparate message to each Bcc recipient
 send(SmtpConn, #mime_msg{}=Msg) ->
-    {_FromName, FromAddress} = esmtp_mime:from(Msg),
-    RcptTo = [Addr || {_, Addr} <- esmtp_mime:to(Msg)],
-    RcptCc = [Addr || {_, Addr} <- esmtp_mime:cc(Msg)],
-    RcptBcc = [Addr || {_, Addr} <- esmtp_mime:bcc(Msg)],
+    F = fun(ComposedAddress) ->
+        {ok, _Name, Addr} = parse_address(ComposedAddress),
+        Addr
+    end,
+    FromAddress = esmtp_mime:from(Msg),
+    RcptTo = [F(Addr) || Addr <- esmtp_mime:to(Msg)],
+    RcptCc = [F(Addr) || Addr <- esmtp_mime:cc(Msg)],
+    RcptBcc = [F(Addr) || Addr <- esmtp_mime:bcc(Msg)],
     Rcpt = RcptTo++RcptCc++RcptBcc,
     case Rcpt of
         [] ->
             {error, "Missing destination address."}
         ;
         [_H | _T] ->
-            esmtp_client:send(SmtpConn, FromAddress, Rcpt, esmtp_mime:encode_no_bcc(Msg))
+            esmtp_client:send(
+                SmtpConn,
+                FromAddress,
+                Rcpt,
+                esmtp_mime:encode_no_bcc(Msg)
+            )
     end
 .
 
