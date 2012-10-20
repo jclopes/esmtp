@@ -17,8 +17,6 @@ New Features
 TODO
 ====
 
-add headers for 'TO' and 'CC'.
-
 support for utf-8.
 
 Configuration
