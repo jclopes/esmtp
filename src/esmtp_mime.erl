@@ -222,7 +222,7 @@ encode_address({Name, Address}) ->
     "=?UTF-8?B?"++base64:encode_to_string(Name)++"?= <"++Address++">"
 ;
 encode_address(Address) when is_list(Address) ->
-    Address
+    "<"++Address++">"
 .
 
 encode_subject(Subject) ->
