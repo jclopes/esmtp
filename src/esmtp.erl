@@ -12,13 +12,10 @@
 
 %% API
 -export([
-    conn/3,
+    conn/4,
     send/2,
     send/5
 ]).
-
--define(SMTP_PORT_TLS, 587).
--define(SMTP_PORT_SSL, 465).
 
 %%====================================================================
 %% API
@@ -29,11 +26,12 @@
 % Arguments:
 %  ClientFQDN: this should be a FQDN of the client. RFC 2821.
 %  {Host, Port}: SMTP server Hostname and SMTP server port
+%  SSL: specifies if an ssl connection should be used
 %  Authentication: this will be {user, pass} or XOAUTH token
-% @spec conn(string(), {string(), integer()}, term()) -> SmtpConn::term()
-conn(ClientFQDN, {Host, Port}, Authentication) when is_integer(Port) ->
+% @spec conn(string(), {string(), integer()}, boolean(), term()) -> SmtpConn::term()
+conn(ClientFQDN, {Host, Port}, SSL, Authentication) when is_integer(Port) ->
     Ehlo = ClientFQDN,
-    case need_ssl(Port) of
+    case SSL of
         true -> {Host, Port, ssl, Ehlo, Authentication};
         false -> {Host, Port, gen_tcp, Ehlo, Authentication}
     end
@@ -103,10 +101,6 @@ assembly_msg({FromName, FromAddress}, ToList, Subject, Body) ->
     "\r\n"++
     Body
 .
-
-need_ssl(?SMTP_PORT_TLS) -> true;
-need_ssl(?SMTP_PORT_SSL) -> true;
-need_ssl(_) -> false.
 
 % @doc Parses an email adress into a pair of {Name, Address}
 % accepts email in the form of "Name &lt;user@domain&gt;" or "&lt;user@domain&gt;".
