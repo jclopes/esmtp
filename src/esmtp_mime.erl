@@ -75,39 +75,39 @@ encode_no_bcc(#mime_msg{headers=H}=Msg) ->
 .
 
 to(Msg, To) ->
-    replace_header(Msg, "To", To)
+    replace_header(Msg, "To", encode_addresses(To))
 .
 
 to(#mime_msg{headers=H}) ->
     [
-        encode_address(NameAddress)
+        NameAddress
         ||
         NameAddress <- proplists:get_value("To", H, [])
     ]
 .
 
 cc(Msg, Cc) ->
-    replace_header(Msg, "Cc", Cc)
+    replace_header(Msg, "Cc", encode_addresses(Cc))
 .
 
 cc(#mime_msg{headers=H}) ->
     [
-        encode_address(NameAddress)
+        NameAddress
         ||
         NameAddress <- proplists:get_value("Cc", H, [])
     ]
 .
 
 bcc(Msg, Bcc) ->
-    [
-        encode_address(NameAddress)
-        ||
-        NameAddress <- replace_header(Msg, "Bcc", Bcc)
-    ]
+    replace_header(Msg, "Bcc", encode_addresses(Bcc))
 .
 
 bcc(#mime_msg{headers=H}) ->
-    proplists:get_value("Bcc", H, [])
+    [
+        NameAddress
+        ||
+        NameAddress <- proplists:get_value("Bcc", H, [])
+    ]
 .
 
 from(Msg, From) ->
@@ -218,11 +218,18 @@ send(Ip, Host, From, To, Msg=#mime_msg{}) ->
 send_test(Ip, Host, From, To) ->
     send(Ip, Host, From, To, test_msg()).
 
+encode_addresses(Addresses) ->
+    lists:map(fun encode_address/1, Addresses)
+.
+
 encode_address({Name, Address}) ->
-    "=?UTF-8?B?"++base64:encode_to_string(Name)++"?= <"++Address++">"
+    "=?UTF-8?B?"++base64:encode_to_string(Name)++"?= "++encode_address(Address)
 ;
 encode_address(Address) when is_list(Address) ->
-    "<"++Address++">"
+    case re:run(Address, "^<.*>$") of
+        nomatch -> "<"++Address++">";
+        _ -> Address
+    end
 .
 
 encode_subject(Subject) ->
