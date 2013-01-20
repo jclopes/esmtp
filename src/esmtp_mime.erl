@@ -22,6 +22,7 @@
     bcc/1, bcc/2,
     subject/1, subject/2,
     add_text_part/2,
+    attachments/1,
     add_attachment_part/3,
     del_attachment_part/2
 ]).
@@ -134,6 +135,16 @@ date(Msg, DateTime) ->
 
 add_text_part(Msg = #mime_msg{parts=Parts}, Text) ->
     Msg#mime_msg{parts=Parts ++ [#mime_part{data=Text}]}
+.
+
+attachments(#mime_msg{parts=Parts}) ->
+    F = fun(#mime_part{type=Type}) ->
+        case Type of
+            attachment -> true;
+            _ -> false
+        end
+    end,
+    [{Name, Data} || #mime_part{name=Name, data=Data} <- lists:filter(F, Parts)]
 .
 
 add_attachment_part(#mime_msg{parts=Parts}=Msg, Filename, FileData) when
